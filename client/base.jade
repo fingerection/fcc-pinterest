@@ -1,7 +1,7 @@
 doctype html
 html(lang='en')
   head
-    title FCC-Voting
+    title FCC-NightLife
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
     link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css')
     // <link rel="stylesheet" href="/css/bootstrap-responsive.min.css">
@@ -25,16 +25,11 @@ html(lang='en')
             span.icon-bar
             span.icon-bar
             span.icon-bar
-          a.navbar-brand(href='/') FCC Voting
+          a.navbar-brand(href='/') FCC-NightLife
         #navbar.navbar-collapse.collapse
           ul.nav.navbar-nav
             li.active
               a(href='/') Home
-            if user
-              li
-                a(href='/create') New Vote
-              li
-                a(href='/my') My Vote
           ul.nav.navbar-nav.navbar-right
             if !user
               li

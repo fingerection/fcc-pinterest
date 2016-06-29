@@ -1,15 +1,13 @@
 //- index.jade
 extends ./base.jade
 
+block header
+  link(rel='stylesheet', href='/css/main.css')
+
 block container
-  .jumbotron
-    h1 Vote for your choice
-    p
-      | You can signup to create a vote and share it to your friends.
-    p
-  .row
-    each obj in votes
-      .col-md-4.vote
-        div
-          a(href="/vote/"+obj.id)
-            h3= obj.name
+  #todo
+    
+block footer
+  script(src='https://fb.me/react-15.1.0.js')
+  script(src='https://fb.me/react-dom-15.1.0.min.js')
+  script(src='/js/index.js')

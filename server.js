@@ -11,9 +11,10 @@ var passport = require('passport'),
   LocalStrategy = require('passport-local').Strategy;
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var request = require('request');
 
-var VoteClass = require("./models/vote.js");
 var UserClass = require("./models/user.js");
+var GoingClass = require("./models/going.js");
 
 var router = express();
 var server = http.createServer(router);
@@ -24,26 +25,7 @@ router.set('view engine', 'jade');
 router.set('views', process.cwd() + '/client');
 
 var User = new UserClass();
-var Votes = new VoteClass();
-// initial vote
-Votes.create('BigMac or Pizza', [{
-  id: 'input-0',
-  option: 'BigMac',
-  count: 10
-}, {
-  id: 'input-1',
-  option: 'Pizza',
-  count: 12
-}], 'default');
-Votes.create('Girl or Boy', [{
-  id: 'input-0',
-  option: 'Girl',
-  count: 10
-}, {
-  id: 'input-1',
-  option: 'Boy',
-  count: 12
-}], 'default');
+var Going = new GoingClass();
 
 passport.use(new LocalStrategy(
   function(username, password, done) {
@@ -92,8 +74,7 @@ router.use(passport.session());
 
 router.get('/', function(req, res) {
   res.render('index', {
-    user: req.user,
-    votes: Votes.listAll()
+    user: req.user
   });
 });
 
@@ -133,79 +114,60 @@ router.post('/signup', function(req, res) {
   }
 });
 
-router.get('/vote/:id', function(req, res) {
-  var voteId = req.params.id;
-  var vote = Votes.getById(voteId);
-  var datalist = [];
-  var optionlist = [];
-  for (var i = 0; i < vote.options.length; i++) {
-    var o = vote.options[i];
-    datalist.push('' + o.count);
-    optionlist.push('"' + o.option + '"');
-  }
-  res.render('vote', {
-    user: req.user,
-    vote: vote,
-    dataString: datalist.join(','),
-    optionString: optionlist.join(',')
-  });
-});
-
-router.post('/vote/:id', function(req, res) {
-  var voteId = req.params.id;
-  var optionid = req.body.select;
-
-  Votes.vote(voteId, optionid);
-  res.redirect('/vote/' + voteId)
-});
-
-
-router.get('/create', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
-  res.render('create', {
-    user: req.user
-  });
-});
-
-router.get('/delvote/:id', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
-  var voteId = req.params.id;
-  Votes.delete(voteId, req.user.username);
-  res.redirect('/my')
-});
-
-router.post('/create', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
-  console.log(req.body);
-  var title = '',
-    options = [];
-  for (var k in req.body) {
-    if (k == 'title') {
-      title = req.body[k];
-    }
-    else if (k.startsWith('input-')) {
-      options.push({
-        id: k,
-        option: req.body[k],
-        count: 0
-      })
-    }
-  }
-  var author = req.user.username;
-  Votes.create(title, options, author);
-  res.redirect('/');
-});
-
-router.get('/my', require('connect-ensure-login').ensureLoggedIn(),  function(req, res) {
-  res.render('my', {
-    user: req.user,
-    votes: Votes.listAll(req.user.username)
-  });
-});
-
 router.get('/logout',
   function(req, res) {
     req.logout();
     res.redirect('/');
   });
+  
+var yelp = require('./yelp.js');
 
+router.get('/api/search/:keyword', function(req, res) {
+	var keyword = req.params.keyword;
+	var offset = req.query.offset || "0";
+	var limit = req.query.limit || "20";
+	
+  yelp.request_yelp({location: keyword, category_filter:'bars', offset: offset, limit: limit}, function(err, response, body){
+    if(err) {
+      res.send('err'+err.toString());
+      return;
+    }
+    var bodyObj = JSON.parse(body);
+    var result = [];
+    if(bodyObj.businesses === undefined) {
+      res.send([]);
+      return;
+    }
+    for(var i=0; i<bodyObj.businesses.length; i++) {
+      var business = bodyObj.businesses[i];
+      var username = '';
+      if (req.user) {
+        username = req.user.username;
+      }
+      var info = Going.getStatus(business.id, username);
+      result.push({
+        imgurl: business.image_url,
+        id: business.id,
+        name: business.name,
+        total: info.total,
+        status: info.goingStatus
+      });
+    }
+    res.send(result);
+  });
+});
+
+router.get('/api/dogoing/:barid', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
+  var barId = req.params.barid;
+  Going.doGoing(barId, req.user.username);
+  res.send({status: "1"});
+});
+
+router.get('/api/ungoing/:barid', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
+  var barId = req.params.barid;
+  Going.unGoing(barId, req.user.username);
+  res.send({status: "1"});
+});
 
 server.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function() {
   var addr = server.address();
