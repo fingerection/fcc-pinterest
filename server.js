@@ -5,6 +5,7 @@
 //
 var http = require('http');
 var path = require('path');
+var socketio = require('socket.io');
 
 var express = require('express');
 var passport = require('passport'),
@@ -18,6 +19,32 @@ var GoingClass = require("./models/going.js");
 
 var router = express();
 var server = http.createServer(router);
+
+var io = socketio.listen(server);
+var sockets = [];
+var symbols = {symbols: ['AAPL']};
+
+io.on('connection', function(socket) {
+  console.log('connect');
+  sockets.push(socket);
+  socket.emit('message', symbols);
+
+  socket.on('disconnect', function() {
+    sockets.splice(sockets.indexOf(socket), 1);
+  });
+
+  socket.on('message', function(msg) {
+    console.log(msg);
+    symbols = {symbols: msg};
+    broadcast('message', symbols);
+  });
+});
+
+function broadcast(event, data) {
+  sockets.forEach(function(socket) {
+    socket.emit(event, data);
+  });
+}
 
 router.use(express.static(path.resolve(__dirname, 'client')));
 

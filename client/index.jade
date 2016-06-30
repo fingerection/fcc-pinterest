@@ -5,9 +5,13 @@ block header
   link(rel='stylesheet', href='/css/main.css')
 
 block container
-  #todo
+  #chartDemoContainer(style='height: 500px; min-width: 500px; margin-bottom: 30px;')
+  #updateStatus
+  #controller
     
 block footer
   script(src='https://fb.me/react-15.1.0.js')
   script(src='https://fb.me/react-dom-15.1.0.min.js')
+  script(src='https://code.highcharts.com/stock/highstock.js')
+  script(src='/socket.io/socket.io.js')
   script(src='/js/index.js')

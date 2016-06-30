@@ -1,9 +1,4 @@
-.bar-wrap {
-    padding: 10px;
-}
-
-.bar {
-    border-radius: 5px;
-    background-color: #EEE;
-    padding: 10px;
+#controller h1 {
+  display: inline-block;
+  width: 200px;
 }
