@@ -2,24 +2,26 @@
 extends ./base.jade
 
 block navlist
-  li.active
+  li
     a(href='/') Home
   if user
     li
       a(href='/create') New Image
-    li
+    li.active
       a(href='/my') My Images
-
+      
 block header
   link(rel='stylesheet', href='/css/main.css')
 
 block container
-    .grid(data-masonry='{ "itemSelector": ".card", "columnWidth": 190 }')
+    .grid(data-masonry='{ "itemSelector": ".card", "columnWidth": 200 }')
       each image in images
-        .card
+        .card(id="image"+image.id)
           img(src=image.url)
           p= image.title
+          a.deletelabel(data-id=image.id)
+            i.remove.glyphicon.glyphicon-remove-sign.glyphicon-white
     
 block footer
   script(src='https://npmcdn.com/masonry-layout@4.0/dist/masonry.pkgd.js')
-  script(src='/js/index.js')
+  script(src='/js/my.js')

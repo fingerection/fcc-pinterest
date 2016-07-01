@@ -1,4 +1,30 @@
-#controller h1 {
-  display: inline-block;
-  width: 200px;
+body {
+  background-color: #EEE;
+}
+
+.card {
+  float: left;
+  border: #DDD solid 1px;
+  width: 190px;
+  margin-bottom: 10px;
+  background-color: #FFF;
+/*   display: inline-block;
+  vertical-align: top; */
+}
+
+.card img {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.card p {
+  font-size: 14px;
+  text-align: center;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.card .deletelabel {
+  position: absolute;
+    bottom: 4px;
+    right: 4px;
 }

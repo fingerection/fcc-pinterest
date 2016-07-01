@@ -1,3 +1,3 @@
-# fcc-stock
+# fcc-pinterest
 
-https://www.freecodecamp.com/challenges/chart-the-stock-market
+https://www.freecodecamp.com/challenges/build-a-pinterest-clone

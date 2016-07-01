@@ -5,46 +5,19 @@
 //
 var http = require('http');
 var path = require('path');
-var socketio = require('socket.io');
 
 var express = require('express');
 var passport = require('passport'),
-  LocalStrategy = require('passport-local').Strategy;
+  LocalStrategy = require('passport-local').Strategy,
+  TwitterStrategy = require('passport-twitter').Strategy;
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var request = require('request');
 
 var UserClass = require("./models/user.js");
-var GoingClass = require("./models/going.js");
+var ImageClass = require("./models/image.js");
 
 var router = express();
 var server = http.createServer(router);
-
-var io = socketio.listen(server);
-var sockets = [];
-var symbols = {symbols: ['AAPL']};
-
-io.on('connection', function(socket) {
-  console.log('connect');
-  sockets.push(socket);
-  socket.emit('message', symbols);
-
-  socket.on('disconnect', function() {
-    sockets.splice(sockets.indexOf(socket), 1);
-  });
-
-  socket.on('message', function(msg) {
-    console.log(msg);
-    symbols = {symbols: msg};
-    broadcast('message', symbols);
-  });
-});
-
-function broadcast(event, data) {
-  sockets.forEach(function(socket) {
-    socket.emit(event, data);
-  });
-}
 
 router.use(express.static(path.resolve(__dirname, 'client')));
 
@@ -52,7 +25,7 @@ router.set('view engine', 'jade');
 router.set('views', process.cwd() + '/client');
 
 var User = new UserClass();
-var Going = new GoingClass();
+var ImageStore = new ImageClass();
 
 passport.use(new LocalStrategy(
   function(username, password, done) {
@@ -79,6 +52,20 @@ passport.use(new LocalStrategy(
   }
 ));
 
+passport.use(new TwitterStrategy({
+    consumerKey: 'kymbvbHBcTYXGfLEjQTywzBYJ',
+    consumerSecret: 'pgpn8aGoDvlz0LU6Xf9JW2zOQRY9WXWWaoARpkEjwPC7Osjxxa',
+    callbackURL: 'https://fcc-pinterest-fingerection.c9users.io/twitter_callback'
+  },
+  function(token, tokenSecret, profile, cb) {
+    // In this example, the user's Twitter profile is supplied as the user
+    // record.  In a production-quality application, the Twitter profile should
+    // be associated with a user record in the application's database, which
+    // allows for account linking and authentication with other identity
+    // providers.
+    return cb(null, profile);
+  }));
+
 passport.serializeUser(function(user, cb) {
   cb(null, user);
 });
@@ -99,9 +86,22 @@ router.use(bodyParser());
 router.use(passport.initialize());
 router.use(passport.session());
 
+
+var urls = ['http://img4.imgtn.bdimg.com/it/u=3730363120,438618708&fm=21&gp=0.jpg',
+'http://img1.imgtn.bdimg.com/it/u=3495037814,4039729047&fm=21&gp=0.jpg',
+'http://img1.imgtn.bdimg.com/it/u=1133494587,246370114&fm=21&gp=0.jpg',
+'http://img1.imgtn.bdimg.com/it/u=2908942533,263269990&fm=21&gp=0.jpg',
+'http://img1.imgtn.bdimg.com/it/u=3495037814,4039729047&fm=21&gp=0.jpg'];
+// initial image
+for(var i=0; i<urls.length; i++) {
+  ImageStore.create('Image '+i, urls[i], 'admin');
+}
+
 router.get('/', function(req, res) {
+  var images = ImageStore.getAll();
   res.render('index', {
-    user: req.user
+    user: req.user,
+    images: images
   });
 });
 
@@ -118,6 +118,15 @@ router.post('/login',
     failureFlash: false
   })
 );
+
+router.get('/twitter_login',
+  passport.authenticate('twitter'));
+
+router.get('/twitter_callback', 
+  passport.authenticate('twitter', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/');
+  });
 
 router.get('/signup', function(req, res) {
   res.render('signup', {
@@ -147,53 +156,36 @@ router.get('/logout',
     res.redirect('/');
   });
   
-var yelp = require('./yelp.js');
-
-router.get('/api/search/:keyword', function(req, res) {
-	var keyword = req.params.keyword;
-	var offset = req.query.offset || "0";
-	var limit = req.query.limit || "20";
-	
-  yelp.request_yelp({location: keyword, category_filter:'bars', offset: offset, limit: limit}, function(err, response, body){
-    if(err) {
-      res.send('err'+err.toString());
-      return;
-    }
-    var bodyObj = JSON.parse(body);
-    var result = [];
-    if(bodyObj.businesses === undefined) {
-      res.send([]);
-      return;
-    }
-    for(var i=0; i<bodyObj.businesses.length; i++) {
-      var business = bodyObj.businesses[i];
-      var username = '';
-      if (req.user) {
-        username = req.user.username;
-      }
-      var info = Going.getStatus(business.id, username);
-      result.push({
-        imgurl: business.image_url,
-        id: business.id,
-        name: business.name,
-        total: info.total,
-        status: info.goingStatus
-      });
-    }
-    res.send(result);
+router.get('/create', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
+  res.render('create', {
+    user: req.user
   });
 });
 
-router.get('/api/dogoing/:barid', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
-  var barId = req.params.barid;
-  Going.doGoing(barId, req.user.username);
-  res.send({status: "1"});
+router.post('/create', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
+  var title = req.body.title, url = req.body.url;
+  var author = req.user.username;
+  ImageStore.create(title, url, author);
+  res.redirect('/');
 });
 
-router.get('/api/ungoing/:barid', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
-  var barId = req.params.barid;
-  Going.unGoing(barId, req.user.username);
-  res.send({status: "1"});
+router.get('/my', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
+  var author = req.user.username;
+  var images = ImageStore.getAll(author);
+  res.render('my', {
+    user: req.user,
+    images: images
+  });
+});
+
+router.post('/my', require('connect-ensure-login').ensureLoggedIn(), function(req, res) {
+  var action = req.body.action;
+  var imageid = req.body.imageid;
+  var author = req.user.username;
+  if (action == 'delete'){
+    ImageStore.delete(imageid, author);
+  }
+  res.redirect('/my');
 });
 
 server.listen(process.env.PORT || 3000, process.env.IP || "0.0.0.0", function() {

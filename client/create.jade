@@ -1,0 +1,24 @@
+//- index.jade
+extends ./base.jade
+
+block navlist
+  li
+    a(href='/') Home
+  if user
+    li.active
+      a(href='/create') New Image
+    li
+      a(href='/my') My Images
+
+block container
+  .row
+    .col-md-4.col-md-offset-4
+      h1 新建图片
+      form(method="post")
+        .form-group
+          label(for='imageUrl') 图片URL 
+          input#imageUrl.form-control(type='text', placeholder='url', name='url')
+        .form-group
+          label(for='imageTitle') 图片名称 
+          input#imageTitle.form-control(type='text', placeholder='名称', name='title')
+        button.btn.btn-block.btn-primary(type='submit') 保存

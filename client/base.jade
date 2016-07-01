@@ -1,20 +1,11 @@
 doctype html
 html(lang='en')
   head
-    title FCC-Stock
+    title FCC-Pinterest
     meta(name='viewport', content='width=device-width, initial-scale=1.0')
     link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css')
     // <link rel="stylesheet" href="/css/bootstrap-responsive.min.css">
     block header
-    style.
-      .vote {
-      padding: 10px;
-      }
-      .vote div {
-      background-color: #EEE;
-      border-radius: 10px;
-      padding: 20px;
-      }
   body
     // Static navbar
     nav.navbar.navbar-default.navbar-static-top
@@ -25,12 +16,19 @@ html(lang='en')
             span.icon-bar
             span.icon-bar
             span.icon-bar
-          a.navbar-brand(href='/') FCC-Stock
+          a.navbar-brand(href='/') FCC-Pinterest
         #navbar.navbar-collapse.collapse
           ul.nav.navbar-nav
-            li.active
-              a(href='/') Home
-
+            block navlist
+          ul.nav.navbar-nav.navbar-right
+            if !user
+              li
+                a(href='/login') Login
+              li
+                a(href='/signup') Sign Up
+            else
+              li
+                a(href='/logout') Logout
         // /.nav-collapse
     .container
       block container

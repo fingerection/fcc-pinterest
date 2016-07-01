@@ -2,6 +2,10 @@
 extends ./base.jade
 
 block container
+  style.
+    form button {
+      margin-right: 20px;
+    }
   .row
     .col-md-8.col-md-offset-2
       form(action="/login" method="post")
@@ -12,3 +16,4 @@ block container
           label(for='exampleInputPassword1') Password
           input#exampleInputPassword1.form-control(type='password', placeholder='Password', name="password")
         button.btn.btn-default(type='submit') Login
+        a.btn.btn-primary(href="/twitter_login") Login with Twitter
