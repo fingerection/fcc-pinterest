@@ -55,7 +55,7 @@ passport.use(new LocalStrategy(
 passport.use(new TwitterStrategy({
     consumerKey: 'kymbvbHBcTYXGfLEjQTywzBYJ',
     consumerSecret: 'pgpn8aGoDvlz0LU6Xf9JW2zOQRY9WXWWaoARpkEjwPC7Osjxxa',
-    callbackURL: 'https://fcc-pinterest-fingerection.c9users.io/twitter_callback'
+    callbackURL: 'http://fingerection-fcc-pinterest.herokuapp.com/twitter_callback'
   },
   function(token, tokenSecret, profile, cb) {
     // In this example, the user's Twitter profile is supplied as the user
